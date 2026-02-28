@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
 
-            // restaurant (SaaS Multi-Tenancy)
-            $table->foreignId('restaurant_id')->constrained()->onDelete('cascade');
+            // restaurant (SaaS Multi-Tenancy), null before setup
+            $table->foreignId('restaurant_id')->nullable()->constrained()->onDelete('set null');
 
             $table->string('name');
             $table->string('email')->unique();

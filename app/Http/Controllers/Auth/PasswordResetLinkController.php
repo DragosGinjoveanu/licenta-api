@@ -28,6 +28,13 @@ class PasswordResetLinkController extends Controller
             $request->only('email')
         );
 
+        // return message so that user does not see if email is present inside the database or not
+
+        return response()->json([
+            'status' => 'If your email address exists in our database, you will receive a password recovery link at your email address in a few minutes.'
+        ]);
+
+        /*
         if ($status != Password::RESET_LINK_SENT) {
             throw ValidationException::withMessages([
                 'email' => [__($status)],
@@ -35,5 +42,6 @@ class PasswordResetLinkController extends Controller
         }
 
         return response()->json(['status' => __($status)]);
+        */
     }
 }

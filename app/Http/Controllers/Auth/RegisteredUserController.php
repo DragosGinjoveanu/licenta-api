@@ -34,7 +34,8 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        // do not automatically login user on account creation
+        // Auth::login($user);
 
         return response()->noContent();
     }
