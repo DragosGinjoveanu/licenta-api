@@ -10,4 +10,9 @@ class Restaurant extends Model
         'name',
         'cui',
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

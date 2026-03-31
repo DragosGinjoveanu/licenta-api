@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('restaurants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('cui')->nullable(); // they can add CUI later
+            $table->string('cui')->unique(); // they can add CUI later
             $table->timestamps(); // created_at and updated_at
         });
     }

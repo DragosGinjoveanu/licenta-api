@@ -27,4 +27,11 @@ class Ingredient extends Model
     {
         return $this->supplier ? $this->supplier->name : 'Own Supply';
     }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'recipe_items')
+                    ->withPivot('quantity_required')
+                    ->withTimestamps();
+    }
 }

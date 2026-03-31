@@ -17,11 +17,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::post('/restaurants', [RestaurantController::class, 'store']);
-
+    
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::post('/categories', [CategoryController::class, 'store']);
-    
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::delete('/categories/{id}/products/{productId}', [CategoryController::class, 'detachProduct']);
+    Route::get('/categories/{id}/available-products', [CategoryController::class, 'getAvailableProducts']);
+    Route::post('/categories/{id}/attach-products', [CategoryController::class, 'attachProducts']);
+
+    Route::get('/products', [ProductController::class, 'index']);
     Route::post('/products', [ProductController::class, 'store']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    Route::get('products/{id}/recipe', [ProductController::class, 'getRecipe']);
+    Route::put('products/{id}/recipe', [ProductController::class, 'updateRecipe']);
 
     Route::get('/suppliers', [SupplierController::class, 'index']);
     Route::post('/suppliers', [SupplierController::class, 'store']);
@@ -32,5 +43,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/ingredients', [IngredientController::class, 'store']);
     Route::put('/ingredients/{id}', [IngredientController::class, 'update']);
     Route::delete('/ingredients/{id}', [IngredientController::class, 'destroy']);
-    
 });
