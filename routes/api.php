@@ -8,6 +8,10 @@ use App\Http\Controllers\Restaurant\RestaurantController;
 use App\Http\Controllers\Menu\CategoryController;
 use App\Http\Controllers\Menu\ProductController;
 
+use App\Http\Controllers\Menu\MenuController;
+use App\Http\Controllers\Menu\MenuProductController;
+use App\Http\Controllers\Menu\MenuCategoryController;
+
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\IngredientController;
 
@@ -43,4 +47,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/ingredients', [IngredientController::class, 'store']);
     Route::put('/ingredients/{id}', [IngredientController::class, 'update']);
     Route::delete('/ingredients/{id}', [IngredientController::class, 'destroy']);
+
+    Route::get('/menus', [MenuController::class, 'index']);
+    Route::post('/menus', [MenuController::class, 'store']);
+    Route::get('/menus/{menu}', [MenuController::class, 'show']);
+    Route::put('/menus/{menu}', [MenuController::class, 'update']);
+    Route::delete('/menus/{menu}', [MenuController::class, 'destroy']);
+    //Route::get('/menus/{menu}/export', [MenuController::class, 'exportPdf']);
+
+    Route::put('/menu-categories/reorder', [MenuCategoryController::class, 'reorder']);
+    Route::post('/menu-categories', [MenuCategoryController::class, 'store']);
+    Route::delete('/menu-categories/{menuCategory}', [MenuCategoryController::class, 'destroy']);
+
+    Route::put('/menu-products/reorder', [MenuProductController::class, 'reorder']);
+    Route::post('/menu-products', [MenuProductController::class, 'store']);
+    Route::put('/menu-products/{menuProduct}', [MenuProductController::class, 'update']);
+    Route::delete('/menu-products/{menuProduct}', [MenuProductController::class, 'destroy']);
 });
