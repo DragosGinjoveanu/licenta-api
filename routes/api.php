@@ -17,6 +17,8 @@ use App\Http\Controllers\Inventory\IngredientController;
 
 use App\Http\Controllers\Orders\OrderController;
 
+use App\Http\Controllers\Dashboard\DashboardController;
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -70,4 +72,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/orders/active', [OrderController::class, 'getActiveOrders']);
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders', [OrderController::class, 'store']);
+
+    Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
 });
