@@ -15,7 +15,6 @@ class ProductController extends Controller
     {
         $restaurantId = $request->user()->restaurant_id;
 
-        // 1. AICI AM MODIFICAT: Aducem și ingredientele (pentru a calcula stocul mai jos)
         $query = Product::where('restaurant_id', $restaurantId)->with(['categories', 'ingredients']);
 
         if ($request->filled('search')) {
@@ -69,34 +68,28 @@ class ProductController extends Controller
             $query->orderBy('name', 'asc');
         }
 
-        // 2. AICI AM MODIFICAT: Executăm query-ul și calculăm `max_quantity` pentru fiecare produs
         $products = $query->get();
 
         $products->each(function ($product) {
             if ($product->ingredients->isEmpty()) {
-                // Dacă produsul nu are nicio rețetă setată, presupunem stoc nelimitat
                 $product->max_quantity = 999;
             } else {
                 $maxQuantity = PHP_INT_MAX;
 
                 foreach ($product->ingredients as $ingredient) {
                     if ($ingredient->pivot->quantity_required > 0) {
-                        // Câte porții putem face din ACEST ingredient?
                         $possible = floor($ingredient->stock_quantity / $ingredient->pivot->quantity_required);
                         
-                        // Reținem numărul minim dictat de cel mai limitat ingredient
                         if ($possible < $maxQuantity) {
                             $maxQuantity = $possible;
                         }
                     }
                 }
 
-                // Prevenim cantitățile negative
                 $product->max_quantity = max(0, $maxQuantity);
             }
         });
 
-        // 3. Returnăm colecția procesată
         return response()->json($products);
     }
 

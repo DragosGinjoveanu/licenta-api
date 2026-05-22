@@ -33,23 +33,19 @@ class OrderController extends Controller
         try {
             $order = DB::transaction(function () use ($validated, $restaurantId, $request) {
                 
-                // PASUL 1: Verificăm stocurile înainte să salvăm comanda
                 foreach ($validated['items'] as $itemData) {
                     $product = Product::with('ingredients')->findOrFail($itemData['product_id']);
                     $orderQty = $itemData['quantity'];
 
                     foreach ($product->ingredients as $ingredient) {
-                        // Folosim numele coloanei tale din pivot: quantity_required
                         $requiredAmount = $ingredient->pivot->quantity_required * $orderQty;
                         
-                        // Folosim numele coloanei tale din tabela Ingredient: stock_quantity
                         if ($ingredient->stock_quantity < $requiredAmount) {
                             throw new \Exception("Not enough stock for {$product->name}. Missing ingredient: {$ingredient->name}");
                         }
                     }
                 }
 
-                // PASUL 2: Creăm comanda
                 $order = Order::create([
                     'restaurant_id' => $restaurantId,
                     'user_id' => $request->user()->id,
@@ -66,7 +62,6 @@ class OrderController extends Controller
 
                 $totalAmount = 0;
                 
-                // PASUL 3: Adăugăm produsele pe comandă și SCĂDEM STOCUL
                 foreach ($validated['items'] as $itemData) {
                     $product = Product::with('ingredients')->findOrFail($itemData['product_id']);
                     $subtotal = $product->price * $itemData['quantity'];
@@ -78,7 +73,6 @@ class OrderController extends Controller
                         'unit_price' => $product->price,
                     ]);
 
-                    // Scădem din stock_quantity folosind decrement()
                     foreach ($product->ingredients as $ingredient) {
                         $requiredAmount = $ingredient->pivot->quantity_required * $itemData['quantity'];
                         $ingredient->decrement('stock_quantity', $requiredAmount);
@@ -129,8 +123,8 @@ class OrderController extends Controller
         $oldStatus = $order->status;
         $newStatus = $validated['status'];
 
-        // Facem Restock doar dacă o anulăm din 'pending'. 
-        // Dacă e 'cooking' sau 'ready', le lăsăm scăzute (Waste).
+        // 'pending' -> restock
+        // 'cooking' or 'ready' -> waste
         if ($newStatus === 'cancelled' && $oldStatus === 'pending') {
             DB::transaction(function () use ($order) {
                 foreach ($order->items as $item) {

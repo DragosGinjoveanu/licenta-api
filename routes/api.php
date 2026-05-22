@@ -3,6 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Dashboard\DashboardController;
+
+use App\Http\Controllers\Profile\ProfileController;
+
 use App\Http\Controllers\Restaurant\RestaurantController;
 
 use App\Http\Controllers\Menu\CategoryController;
@@ -17,12 +21,13 @@ use App\Http\Controllers\Inventory\IngredientController;
 
 use App\Http\Controllers\Orders\OrderController;
 
-use App\Http\Controllers\Dashboard\DashboardController;
-
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::put('/profile/name', [ProfileController::class, 'updateName']);
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
 
     Route::post('/restaurants', [RestaurantController::class, 'store']);
     
