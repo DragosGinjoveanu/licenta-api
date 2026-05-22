@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
 
     Route::post('/restaurants', [RestaurantController::class, 'store']);
+    Route::get('/restaurant', [RestaurantController::class, 'show']);
     
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::post('/categories', [CategoryController::class, 'store']);
