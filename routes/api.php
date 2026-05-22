@@ -15,6 +15,8 @@ use App\Http\Controllers\Menu\MenuCategoryController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\IngredientController;
 
+use App\Http\Controllers\Orders\OrderController;
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -63,4 +65,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/menu-products', [MenuProductController::class, 'store']);
     Route::put('/menu-products/{menuProduct}', [MenuProductController::class, 'update']);
     Route::delete('/menu-products/{menuProduct}', [MenuProductController::class, 'destroy']);
+
+    Route::get('/orders/history', [OrderController::class, 'getOrderHistory']);
+    Route::get('/orders/active', [OrderController::class, 'getActiveOrders']);
+    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+    Route::post('/orders', [OrderController::class, 'store']);
 });

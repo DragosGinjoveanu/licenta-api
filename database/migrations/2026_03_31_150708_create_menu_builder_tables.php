@@ -21,7 +21,7 @@ return new class extends Migration
         Schema::create('menu_categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('menu_id')->constrained()->onDelete('cascade');
-            $table->foreignId('category_id')->constrained();
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->integer('order')->default(0);
             $table->timestamps();
         });
@@ -29,7 +29,7 @@ return new class extends Migration
         Schema::create('menu_products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('menu_category_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->integer('order')->default(0);
             
             // filters to show inside pdf
@@ -46,6 +46,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('menu_builder_tables');
+        Schema::dropIfExists('menu_products');
+        Schema::dropIfExists('menu_categories');
+        Schema::dropIfExists('menus');
     }
 };

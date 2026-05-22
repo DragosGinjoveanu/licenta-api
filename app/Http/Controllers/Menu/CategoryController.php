@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use App\Models\MenuCategory;
 
 class CategoryController extends Controller
 {
@@ -90,11 +92,15 @@ class CategoryController extends Controller
             ->where('restaurant_id', $request->user()->restaurant_id)
             ->firstOrFail();
 
-        $category->delete();
-
-        return response()->json([
-            'message' => 'Category deleted successfully.'
-        ]);
+        return DB::transaction(function () use ($category) {
+            MenuCategory::where('category_id', $category->id)->delete();
+    
+            $category->delete();
+    
+            return response()->json([
+                'message' => 'Category deleted successfully from catalog and all active menus.'
+            ]);
+        });
     }
 
     public function show(Request $request, string $id)

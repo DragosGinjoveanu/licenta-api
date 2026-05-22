@@ -22,8 +22,6 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
 
-            $table->decimal('hourly_wage', 8, 2)->nullable();
-
             $table->rememberToken(); // remember me cookie
             $table->timestamps();
         });

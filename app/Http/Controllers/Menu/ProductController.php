@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Menu;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\MenuProduct;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -13,7 +15,8 @@ class ProductController extends Controller
     {
         $restaurantId = $request->user()->restaurant_id;
 
-        $query = Product::where('restaurant_id', $restaurantId)->with('categories');
+        // 1. AICI AM MODIFICAT: Aducem și ingredientele (pentru a calcula stocul mai jos)
+        $query = Product::where('restaurant_id', $restaurantId)->with(['categories', 'ingredients']);
 
         if ($request->filled('search')) {
             $query->where('name', 'ilike', '%' . $request->search . '%');
@@ -27,7 +30,6 @@ class ProductController extends Controller
                 $realCategoryIds = array_diff($categoryIds, [0, '0']); 
 
                 $query->where(function ($q) use ($wantsUncategorized, $realCategoryIds) {
-                    
                     if (count($realCategoryIds) > 0) {
                         $q->whereHas('categories', function ($subQ) use ($realCategoryIds) {
                             $subQ->whereIn('categories.id', $realCategoryIds);
@@ -67,7 +69,35 @@ class ProductController extends Controller
             $query->orderBy('name', 'asc');
         }
 
-        return response()->json($query->get());
+        // 2. AICI AM MODIFICAT: Executăm query-ul și calculăm `max_quantity` pentru fiecare produs
+        $products = $query->get();
+
+        $products->each(function ($product) {
+            if ($product->ingredients->isEmpty()) {
+                // Dacă produsul nu are nicio rețetă setată, presupunem stoc nelimitat
+                $product->max_quantity = 999;
+            } else {
+                $maxQuantity = PHP_INT_MAX;
+
+                foreach ($product->ingredients as $ingredient) {
+                    if ($ingredient->pivot->quantity_required > 0) {
+                        // Câte porții putem face din ACEST ingredient?
+                        $possible = floor($ingredient->stock_quantity / $ingredient->pivot->quantity_required);
+                        
+                        // Reținem numărul minim dictat de cel mai limitat ingredient
+                        if ($possible < $maxQuantity) {
+                            $maxQuantity = $possible;
+                        }
+                    }
+                }
+
+                // Prevenim cantitățile negative
+                $product->max_quantity = max(0, $maxQuantity);
+            }
+        });
+
+        // 3. Returnăm colecția procesată
+        return response()->json($products);
     }
 
     public function store(Request $request)
@@ -117,9 +147,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => [
                 'required', 'string', 'max:150',
-                Rule::unique('products')->where(function ($query) use ($restaurantId) {
-                    return $query->where('restaurant_id', $restaurantId);
-                })->ignore($product->id)
+                Rule::unique('products')->where(fn ($q) => $q->where('restaurant_id', $restaurantId))->ignore($product->id)
             ],
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -128,22 +156,28 @@ class ProductController extends Controller
             'category_ids.*' => 'exists:categories,id'
         ]);
 
-        $product->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'price' => $validated['price'],
-            'is_available' => $validated['is_available'] ?? true,
-        ]);
-
-        // many-to-many table
-        if (isset($validated['category_ids'])) {
-            $product->categories()->sync($validated['category_ids']);
-        }
-
-        return response()->json([
-            'message' => 'Product updated successfully!',
-            'product' => $product->load('categories')
-        ]);
+        return DB::transaction(function () use ($product, $validated) {
+            $product->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
+                'price' => $validated['price'],
+                'is_available' => $validated['is_available'] ?? true,
+            ]);
+        
+            if (array_key_exists('category_ids', $validated)) {
+                $product->categories()->sync($validated['category_ids']);
+                
+                // make sure to delete product from menus, if necessary
+                $queryToDelete = MenuProduct::where('product_id', $product->id)
+                    ->whereHas('menuCategory', function($query) use ($validated) {
+                        $query->whereNotIn('category_id', $validated['category_ids'] ?? []);
+                    });
+        
+                $deletedRows = $queryToDelete->delete();
+            }
+        
+            return response()->json($product->load('categories'));
+        });
     }
 
     public function destroy(Request $request, string $id)

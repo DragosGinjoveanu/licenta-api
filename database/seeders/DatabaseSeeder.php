@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@test.com',
             'password' => Hash::make('password'),
             'restaurant_id' => $restaurant->id,
-            'hourly_wage' => 0,
         ]);
     }
 }
